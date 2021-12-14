@@ -6,10 +6,6 @@ import (
 	"os"
 )
 
-type IParams interface {
-	Params() []IParam
-}
-
 type IParam interface {
 	ParamName() string
 }

@@ -81,22 +81,22 @@ func (c *Client) Do(ctx context.Context, req IRequest) (IResponse, error) {
 	return rsp, nil
 }
 
-func (c *Client) Execute(ctx context.Context, method, resource string, params IParams) (IResponse, error) {
+func (c *Client) Execute(ctx context.Context, method, resource string, params ...IParam) (IResponse, error) {
 	var req = NewRequest(method, resource)
-	req.AddParams(params.Params()...)
+	req.AddParams(params...)
 	return c.Do(ctx, req)
 }
 
-func (c *Client) Get(ctx context.Context, resource string, params IParams) (IResponse, error) {
-	return c.Execute(ctx, "GET", resource, params)
+func (c *Client) Get(ctx context.Context, resource string, params ...IParam) (IResponse, error) {
+	return c.Execute(ctx, "GET", resource, params...)
 }
 
-func (c *Client) Post(ctx context.Context, resource string, params IParams) (IResponse, error) {
-	return c.Execute(ctx, "POST", resource, params)
+func (c *Client) Post(ctx context.Context, resource string, params ...IParam) (IResponse, error) {
+	return c.Execute(ctx, "POST", resource, params...)
 }
 
-func (c *Client) Put(ctx context.Context, resource string, params IParams) (IResponse, error) {
-	return c.Execute(ctx, "PUT", resource, params)
+func (c *Client) Put(ctx context.Context, resource string, params ...IParam) (IResponse, error) {
+	return c.Execute(ctx, "PUT", resource, params...)
 }
 
 func (c *Client) runBeforeHooks(req IRequest) {
