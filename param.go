@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 )
 
 type IParam interface {
@@ -106,6 +107,30 @@ type FileParam struct {
 	ContentType    string
 	ContentLength  int64
 	FileWriterFunc WriterFunc
+}
+
+func NewBytesFileParam(fieldName, fileName string, bytes []byte) *FileParam {
+	return &FileParam{
+		Name:           fieldName,
+		FileName:       fileName,
+		ContentType:    http.DetectContentType(bytes),
+		ContentLength:  int64(len(bytes)),
+		FileWriterFunc: BytesWriter(bytes),
+	}
+}
+
+func NewPathFileParam(fieldName, filePath string) (*FileParam, error) {
+	var contentType, size, err = DetectContentTypeAndSize(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return &FileParam{
+		Name:           fieldName,
+		FileName:       path.Base(filePath),
+		ContentType:    contentType,
+		ContentLength:  size,
+		FileWriterFunc: FileWriter(filePath),
+	}, nil
 }
 
 func (p FileParam) ParamName() string {

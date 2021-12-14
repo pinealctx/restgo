@@ -172,29 +172,17 @@ func (r *Request) SetXMLBody(obj interface{}) IRequest {
 }
 
 func (r *Request) AddFileBytes(fieldName, fileName string, bytes []byte) IRequest {
-	r.Files = append(r.Files, &FileParam{
-		Name:           fieldName,
-		FileName:       fileName,
-		ContentType:    http.DetectContentType(bytes),
-		ContentLength:  int64(len(bytes)),
-		FileWriterFunc: BytesWriter(bytes),
-	})
+	r.Files = append(r.Files, NewBytesFileParam(fieldName, fileName, bytes))
 	return r
 }
 
 func (r *Request) AddFilePath(fieldName, filePath string) IRequest {
-	var contentType, size, err = DetectContentTypeAndSize(filePath)
+	var p, err = NewPathFileParam(fieldName, filePath)
 	if err != nil {
 		r.Err = err
 		return r
 	}
-	r.Files = append(r.Files, &FileParam{
-		Name:           fieldName,
-		FileName:       path.Base(filePath),
-		ContentType:    contentType,
-		ContentLength:  size,
-		FileWriterFunc: FileWriter(filePath),
-	})
+	r.Files = append(r.Files, p)
 	return r
 }
 
