@@ -13,7 +13,7 @@ type option struct {
 	baseURL       *url.URL
 	globalHeader  http.Header
 	transport     http.RoundTripper
-	jar           *cookiejar.Jar
+	jar           http.CookieJar
 	timeout       time.Duration
 	checkRedirect func(req *http.Request, via []*http.Request) error
 	beforeHooks   []BeforeHookFunc
