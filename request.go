@@ -2,10 +2,7 @@ package restgo
 
 import (
 	"bytes"
-	"encoding/xml"
 	"fmt"
-	"github.com/pinealctx/neptune/jsonx"
-	"go.uber.org/zap/zapcore"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -139,35 +136,22 @@ func (r *Request) SetBody(contentType string, value io.Reader) IRequest {
 }
 
 func (r *Request) SetJSONBody(obj interface{}) IRequest {
-	var buff []byte
-	var err error
-	switch o := obj.(type) {
-	case zapcore.ObjectMarshaler:
-		buff, err = ZapJSONMarshal(o)
-	default:
-		buff, err = jsonx.JSONFastMarshal(o)
-	}
+	var body, err = NewJSONBody(obj)
 	if err != nil {
 		r.Err = err
 		return r
 	}
-	r.Body = &BodyParam{
-		ContentType: "application/json; charset=utf-8",
-		Value:       bytes.NewBuffer(buff),
-	}
+	r.Body = body
 	return r
 }
 
 func (r *Request) SetXMLBody(obj interface{}) IRequest {
-	var buff, err = xml.Marshal(obj)
+	var body, err = NewXMLBody(obj)
 	if err != nil {
 		r.Err = err
 		return r
 	}
-	r.Body = &BodyParam{
-		ContentType: "application/xml; charset=utf-8",
-		Value:       bytes.NewBuffer(buff),
-	}
+	r.Body = body
 	return r
 }
 

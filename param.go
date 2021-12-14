@@ -1,6 +1,10 @@
 package restgo
 
 import (
+	"bytes"
+	"encoding/xml"
+	"github.com/pinealctx/neptune/jsonx"
+	"go.uber.org/zap/zapcore"
 	"io"
 	"net/http"
 	"os"
@@ -94,6 +98,35 @@ type BodyParam struct {
 
 func NewBodyParam(contentType string, value io.Reader) *BodyParam {
 	return &BodyParam{Value: value, ContentType: contentType}
+}
+
+func NewJSONBody(obj interface{}) (*BodyParam, error) {
+	var buff []byte
+	var err error
+	switch o := obj.(type) {
+	case zapcore.ObjectMarshaler:
+		buff, err = ZapJSONMarshal(o)
+	default:
+		buff, err = jsonx.JSONFastMarshal(o)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &BodyParam{
+		ContentType: "application/json; charset=utf-8",
+		Value:       bytes.NewBuffer(buff),
+	}, nil
+}
+
+func NewXMLBody(obj interface{}) (*BodyParam, error) {
+	var buff, err = xml.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &BodyParam{
+		ContentType: "application/xml; charset=utf-8",
+		Value:       bytes.NewBuffer(buff),
+	}, nil
 }
 
 func (p BodyParam) ParamName() string {
