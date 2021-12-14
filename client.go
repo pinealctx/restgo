@@ -28,17 +28,20 @@ func New(optFns ...OptionFn) *Client {
 	for _, fn := range optFns {
 		fn(o)
 	}
+	var client = &http.Client{
+		Transport:     o.transport,
+		Timeout:       o.timeout,
+		CheckRedirect: o.checkRedirect,
+	}
+	if o.jar != nil {
+		client.Jar = o.jar
+	}
 	return &Client{
 		baseURL:      o.baseURL,
 		globalHeader: o.globalHeader,
 		beforeHooks:  o.beforeHooks,
 		afterHooks:   o.afterHooks,
-		client: &http.Client{
-			Transport:     o.transport,
-			Jar:           o.jar,
-			Timeout:       o.timeout,
-			CheckRedirect: o.checkRedirect,
-		},
+		client:       client,
 	}
 }
 
