@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	version           = "1.0.0"
+	version           = "0.0.1"
 	defaultUA         = "RestGO/" + version
 	headerContentType = "Content-Type"
 	headerUserAgent   = "User-Agent"
@@ -42,7 +42,7 @@ func New(optFns ...OptionFn) *Client {
 	}
 }
 
-func (c *Client) do(ctx context.Context, req IRequest) (IResponse, error) {
+func (c *Client) Do(ctx context.Context, req IRequest) (IResponse, error) {
 	// run before hooks
 	c.runBeforeHooks(req)
 
@@ -51,7 +51,7 @@ func (c *Client) do(ctx context.Context, req IRequest) (IResponse, error) {
 		return nil, err
 	}
 	var body io.Reader
-	body, err = req.GetRequestBody()
+	body, err = req.MakeRequestBody()
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +79,24 @@ func (c *Client) do(ctx context.Context, req IRequest) (IResponse, error) {
 	// run after hooks
 	c.runAfterHooks(req, rsp)
 	return rsp, nil
+}
+
+func (c *Client) Execute(ctx context.Context, method, resource string, params IParams) (IResponse, error) {
+	var req = NewRequest(method, resource)
+	req.AddParams(params.Params()...)
+	return c.Do(ctx, req)
+}
+
+func (c *Client) Get(ctx context.Context, resource string, params IParams) (IResponse, error) {
+	return c.Execute(ctx, "GET", resource, params)
+}
+
+func (c *Client) Post(ctx context.Context, resource string, params IParams) (IResponse, error) {
+	return c.Execute(ctx, "POST", resource, params)
+}
+
+func (c *Client) Put(ctx context.Context, resource string, params IParams) (IResponse, error) {
+	return c.Execute(ctx, "PUT", resource, params)
 }
 
 func (c *Client) runBeforeHooks(req IRequest) {

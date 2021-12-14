@@ -35,7 +35,7 @@ type IRequest interface {
 
 	MakeURL(baseURL *url.URL) (string, error)
 	GetMethod() string
-	GetRequestBody() (io.Reader, error)
+	MakeRequestBody() (io.Reader, error)
 	WrapperHTTPRequest(req *http.Request)
 }
 
@@ -239,7 +239,10 @@ func (r *Request) GetMethod() string {
 	return r.Method
 }
 
-func (r *Request) GetRequestBody() (io.Reader, error) {
+func (r *Request) MakeRequestBody() (io.Reader, error) {
+	if r.Method == "GET" {
+		return nil, nil
+	}
 	if r.Body != nil {
 		if r.Body.ContentType != "" {
 			r.ContentType = r.Body.ContentType

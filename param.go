@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+type IParams interface {
+	Params() []IParam
+}
+
 type IParam interface {
 	ParamName() string
 }
@@ -25,6 +29,10 @@ type CookieParam struct {
 	http.Cookie
 }
 
+func NewCookieParam(cookie *http.Cookie) *CookieParam {
+	return &CookieParam{Cookie: *cookie}
+}
+
 func (p CookieParam) ParamName() string {
 	return p.Name
 }
@@ -34,9 +42,23 @@ type HeaderParam struct {
 	BaseParam
 }
 
+func NewHeaderParam(name, value string) *HeaderParam {
+	return &HeaderParam{BaseParam{
+		Name:  name,
+		Value: value,
+	}}
+}
+
 // URLQueryParam 将参数通过URL Query携带
 type URLQueryParam struct {
 	BaseParam
+}
+
+func NewURLQueryParam(name, value string) *URLQueryParam {
+	return &URLQueryParam{BaseParam{
+		Name:  name,
+		Value: value,
+	}}
 }
 
 // URLSegmentParam 将参数通过URL segment携带
@@ -46,10 +68,24 @@ type URLSegmentParam struct {
 	Format string
 }
 
+func NewURLSegmentParam(name, value, format string) *URLSegmentParam {
+	return &URLSegmentParam{BaseParam: BaseParam{
+		Name:  name,
+		Value: value,
+	}, Format: format}
+}
+
 // FormDataParam 将参数通过Form表单（multipart/form-data或application/x-www-form-urlencoded）携带
 type FormDataParam struct {
 	BaseParam
 	ContentType string
+}
+
+func NewFormDataParam(name, value, contentType string) *FormDataParam {
+	return &FormDataParam{BaseParam: BaseParam{
+		Name:  name,
+		Value: value,
+	}, ContentType: contentType}
 }
 
 // BodyParam 将参数作为HTTP Body携带，具体序列化方式通过参数内容类型而定
@@ -57,6 +93,10 @@ type FormDataParam struct {
 type BodyParam struct {
 	ContentType string
 	Value       io.Reader
+}
+
+func NewBodyParam(contentType string, value io.Reader) *BodyParam {
+	return &BodyParam{Value: value, ContentType: contentType}
 }
 
 func (p BodyParam) ParamName() string {
