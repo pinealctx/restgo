@@ -79,14 +79,10 @@ func NewURLSegmentParam(name, value, format string) *URLSegmentParam {
 // FormDataParam 将参数通过Form表单（multipart/form-data或application/x-www-form-urlencoded）携带
 type FormDataParam struct {
 	BaseParam
-	ContentType string
 }
 
-func NewFormDataParam(name, value, contentType string) *FormDataParam {
-	return &FormDataParam{BaseParam: BaseParam{
-		Name:  name,
-		Value: value,
-	}, ContentType: contentType}
+func NewFormDataParam(name, value string) *FormDataParam {
+	return &FormDataParam{BaseParam{Name: name, Value: value}}
 }
 
 // BodyParam 将参数作为HTTP Body携带，具体序列化方式通过参数内容类型而定

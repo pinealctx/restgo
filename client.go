@@ -45,7 +45,6 @@ func New(optFns ...OptionFn) *Client {
 func (c *Client) Do(ctx context.Context, req IRequest) (IResponse, error) {
 	// run before hooks
 	c.runBeforeHooks(req)
-
 	var rURL, err = req.MakeURL(CloneURL(c.baseURL))
 	if err != nil {
 		return nil, err

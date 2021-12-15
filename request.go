@@ -22,7 +22,7 @@ type IRequest interface {
 	AddHeader(name, value string) IRequest
 	AddURLQuery(name, value string) IRequest
 	AddURLSegment(name, value, format string) IRequest
-	AddFormItem(name, value, contentType string) IRequest
+	AddFormItem(name, value string) IRequest
 	AddFileBytes(fieldName, fileName string, bytes []byte) IRequest
 	AddFilePath(fieldName, filePath string) IRequest
 	SetBody(contentType string, value io.Reader) IRequest
@@ -116,14 +116,8 @@ func (r *Request) AddURLSegment(name, value, format string) IRequest {
 	return r
 }
 
-func (r *Request) AddFormItem(name, value, contentType string) IRequest {
-	r.FormItems = append(r.FormItems, &FormDataParam{
-		BaseParam: BaseParam{
-			Name:  name,
-			Value: value,
-		},
-		ContentType: contentType,
-	})
+func (r *Request) AddFormItem(name, value string) IRequest {
+	r.FormItems = append(r.FormItems, NewFormDataParam(name, value))
 	return r
 }
 
@@ -252,20 +246,21 @@ func (r *Request) makeFormDataBody() io.Reader {
 func (r *Request) makeMultipartBody() (io.Reader, error) {
 	var body = new(bytes.Buffer)
 	var writer = multipart.NewWriter(body)
-	var fileWriter io.Writer
+	defer writer.Close()
 	var err error
+	for _, f := range r.FormItems {
+		err = writer.WriteField(f.Name, f.Value)
+		if err != nil {
+			return nil, err
+		}
+	}
 	for _, f := range r.Files {
+		var fileWriter io.Writer
 		fileWriter, err = writer.CreateFormFile(f.Name, f.FileName)
 		if err != nil {
 			return nil, err
 		}
 		err = f.FileWriterFunc(fileWriter)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, f := range r.FormItems {
-		err = writer.WriteField(f.Name, f.Value)
 		if err != nil {
 			return nil, err
 		}
