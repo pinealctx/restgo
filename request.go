@@ -170,9 +170,12 @@ func (r *Request) WithContentType(contentType string) IRequest {
 }
 
 func (r *Request) MakeURL(baseURL *url.URL) (string, error) {
-	var reqURL, err = url.ParseRequestURI(r.Resource)
-	if err == nil {
-		baseURL = reqURL
+	if strings.HasPrefix(r.Resource, "http://") ||
+		strings.HasPrefix(r.Resource, "https://") {
+		var reqURL, err = url.ParseRequestURI(r.Resource)
+		if err == nil {
+			baseURL = reqURL
+		}
 	} else {
 		baseURL.Path = path.Join(baseURL.Path, r.Resource)
 	}
