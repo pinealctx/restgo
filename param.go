@@ -3,12 +3,15 @@ package restgo
 import (
 	"bytes"
 	"encoding/xml"
+	"github.com/fatih/structtag"
 	"github.com/pinealctx/neptune/jsonx"
+	"github.com/pinealctx/neptune/tex"
 	"go.uber.org/zap/zapcore"
 	"io"
 	"net/http"
 	"os"
 	"path"
+	"reflect"
 )
 
 type IParam interface {
@@ -199,4 +202,71 @@ func FileWriter(filePath string) WriterFunc {
 		}
 		return nil
 	}
+}
+
+func ObjectParams(obj interface{}) []IParam {
+	var objV = reflect.ValueOf(obj)
+	if objV.Kind() != reflect.Ptr {
+		return nil
+	}
+	objV = objV.Elem()
+	if objV.Kind() != reflect.Struct {
+		return nil
+	}
+	var objT = objV.Type()
+	var size = objT.NumField()
+	var params = make([]IParam, 0, size)
+	for i := 0; i < size; i++ {
+		f := objT.Field(i)
+		if f.PkgPath != "" && !f.Anonymous {
+			continue
+		}
+		tags, err := structtag.Parse(string(f.Tag))
+		if err != nil {
+			continue
+		}
+		var p = tags2Param(tags, objV.Field(i))
+		if p != nil {
+			params = append(params, p)
+		}
+	}
+	return params
+}
+
+const (
+	tagNameQuery      = "query"
+	tagNamePath       = "path"
+	tagNameHeader     = "header"
+	tagNameCookie     = "cookie"
+	tagOptionRequired = "required"
+)
+
+func tags2Param(tags *structtag.Tags, v reflect.Value) IParam {
+	var strValue = tex.ToString(v.Interface())
+	var err error
+	var tag *structtag.Tag
+	if tag, err = tags.Get(tagNameQuery); err == nil {
+		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
+			return NewURLQueryParam(tag.Name, strValue)
+		}
+	}
+	if tag, err = tags.Get(tagNamePath); err == nil {
+		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
+			return NewURLSegmentParam(tag.Name, strValue, "")
+		}
+	}
+	if tag, err = tags.Get(tagNameHeader); err == nil {
+		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
+			return NewHeaderParam(tag.Name, strValue)
+		}
+	}
+	if tag, err = tags.Get(tagNameCookie); err == nil {
+		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
+			return NewCookieParam(&http.Cookie{
+				Name:  tag.Name,
+				Value: strValue,
+			})
+		}
+	}
+	return nil
 }

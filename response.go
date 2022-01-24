@@ -16,11 +16,11 @@ type IResponse interface {
 	JSONUnmarshal(i interface{}) error
 	XMLUnmarshal(i interface{}) error
 	SaveFile(fileName string) error
-	Close()
 }
 
 type Response struct {
-	rsp *http.Response
+	rsp  *http.Response
+	data []byte
 }
 
 func NewResponse(rsp *http.Response) IResponse {
@@ -31,17 +31,18 @@ func (r *Response) GetResponse() *http.Response {
 	return r.rsp
 }
 
-func (r *Response) Close() {
-	r.rsp.Body.Close()
-}
-
 func (r *Response) Data() ([]byte, error) {
-	defer r.Close()
-	return ioutil.ReadAll(r.rsp.Body)
+	if r.data != nil {
+		return r.data, nil
+	}
+	defer r.rsp.Body.Close()
+	var err error
+	r.data, err = ioutil.ReadAll(r.rsp.Body)
+	return r.data, err
 }
 
 func (r *Response) Pipe(writer io.Writer) error {
-	defer r.Close()
+	defer r.rsp.Body.Close()
 	var _, err = io.Copy(writer, r.rsp.Body)
 	return err
 }

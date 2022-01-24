@@ -189,7 +189,11 @@ func (r *Request) MakeURL(baseURL *url.URL) (string, error) {
 	if segSize != 0 {
 		var replaces = make([]string, segSize*2)
 		for i, seg := range r.URLSegments {
-			replaces[i*2] = fmt.Sprintf(defaultURLSegmentFormat, seg.Name)
+			var segFmt = seg.Format
+			if segFmt == "" {
+				segFmt = defaultURLSegmentFormat
+			}
+			replaces[i*2] = fmt.Sprintf(segFmt, seg.Name)
 			replaces[i*2+1] = seg.Value
 		}
 		var replacer = strings.NewReplacer(replaces...)
