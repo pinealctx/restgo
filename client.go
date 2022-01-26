@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	version           = "0.0.1"
+	version           = "0.1.0"
 	defaultUA         = "RestGO/" + version
 	headerContentType = "Content-Type"
 	headerUserAgent   = "User-Agent"

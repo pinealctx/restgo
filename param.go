@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"strings"
 )
 
 type IParam interface {
@@ -215,7 +216,7 @@ func ObjectParams(obj interface{}) []IParam {
 	}
 	var objT = objV.Type()
 	var size = objT.NumField()
-	var params = make([]IParam, 0, size)
+	var params = make([]IParam, 0)
 	for i := 0; i < size; i++ {
 		f := objT.Field(i)
 		if f.PkgPath != "" && !f.Anonymous {
@@ -225,9 +226,9 @@ func ObjectParams(obj interface{}) []IParam {
 		if err != nil {
 			continue
 		}
-		var p = tags2Param(tags, objV.Field(i))
-		if p != nil {
-			params = append(params, p)
+		var p = tags2Params(tags, objV.Field(i))
+		if len(p) != 0 {
+			params = append(params, p...)
 		}
 	}
 	return params
@@ -241,32 +242,44 @@ const (
 	tagOptionRequired = "required"
 )
 
-func tags2Param(tags *structtag.Tags, v reflect.Value) IParam {
-	var strValue = tex.ToString(v.Interface())
-	var err error
-	var tag *structtag.Tag
-	if tag, err = tags.Get(tagNameQuery); err == nil {
-		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
-			return NewURLQueryParam(tag.Name, strValue)
+func tags2Params(tags *structtag.Tags, v reflect.Value) []IParam {
+	var params = make([]IParam, 0)
+	var isSlice = strings.HasPrefix(v.Type().String(), "[]")
+	for _, k := range tags.Keys() {
+		var tag, _ = tags.Get(k)
+		if !tag.HasOption(tagOptionRequired) && v.IsZero() {
+			continue
+		}
+		if !isSlice {
+			var p = makeParamByTag(k, tag.Name, tex.ToString(v.Interface()))
+			if p != nil {
+				params = append(params, p)
+			}
+			continue
+		}
+		for i := 0; i < v.Len(); i++ {
+			var p = makeParamByTag(k, tag.Name, tex.ToString(v.Index(i)))
+			if p != nil {
+				params = append(params, p)
+			}
 		}
 	}
-	if tag, err = tags.Get(tagNamePath); err == nil {
-		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
-			return NewURLSegmentParam(tag.Name, strValue, "")
-		}
-	}
-	if tag, err = tags.Get(tagNameHeader); err == nil {
-		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
-			return NewHeaderParam(tag.Name, strValue)
-		}
-	}
-	if tag, err = tags.Get(tagNameCookie); err == nil {
-		if tag.HasOption(tagOptionRequired) || !v.IsZero() {
-			return NewCookieParam(&http.Cookie{
-				Name:  tag.Name,
-				Value: strValue,
-			})
-		}
+	return params
+}
+
+func makeParamByTag(tag, name, value string) IParam {
+	switch tag {
+	case tagNameQuery:
+		return NewURLQueryParam(name, value)
+	case tagNamePath:
+		return NewURLSegmentParam(name, value, "")
+	case tagNameHeader:
+		return NewHeaderParam(name, value)
+	case tagNameCookie:
+		return NewCookieParam(&http.Cookie{
+			Name:  name,
+			Value: value,
+		})
 	}
 	return nil
 }
