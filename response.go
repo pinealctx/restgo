@@ -11,6 +11,7 @@ import (
 
 type IResponse interface {
 	GetResponse() *http.Response
+	StatusCode() int
 	Data() ([]byte, error)
 	Pipe(writer io.Writer) error
 	JSONUnmarshal(i interface{}) error
@@ -29,6 +30,10 @@ func NewResponse(rsp *http.Response) IResponse {
 
 func (r *Response) GetResponse() *http.Response {
 	return r.rsp
+}
+
+func (r *Response) StatusCode() int {
+	return r.rsp.StatusCode
 }
 
 func (r *Response) Data() ([]byte, error) {
