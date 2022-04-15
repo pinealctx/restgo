@@ -1,11 +1,16 @@
 package restgo
 
 import (
+	"context"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 	"net/http"
 	"net/url"
 	"os"
+)
+
+var (
+	DefaultClient = New()
 )
 
 // The algorithm uses at most sniffLen bytes to make its decision.
@@ -64,4 +69,12 @@ func CloneURL(o *url.URL) *url.URL {
 		Fragment:    o.Fragment,
 		RawFragment: o.RawFragment,
 	}
+}
+
+func Download(ctx context.Context, url string) ([]byte, error) {
+	var rsp, err = DefaultClient.Get(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return rsp.Data()
 }

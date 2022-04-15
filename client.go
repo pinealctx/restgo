@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	version           = "0.1.0"
+	version           = "0.1.2"
 	defaultUA         = "RestGO/" + version
 	headerContentType = "Content-Type"
 	headerUserAgent   = "User-Agent"
@@ -27,6 +27,9 @@ func New(optFns ...OptionFn) *Client {
 	var o = &option{}
 	for _, fn := range optFns {
 		fn(o)
+	}
+	if o.transport == nil {
+		o.transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	}
 	return &Client{
 		baseURL:      o.baseURL,

@@ -46,6 +46,7 @@ func WithCert(certPool *x509.CertPool, cert tls.Certificate) OptionFn {
 			TLSClientConfig: &tls.Config{
 				RootCAs:      certPool,
 				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
 			},
 		}
 	}
