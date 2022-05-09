@@ -25,7 +25,7 @@ type BaseParam struct {
 	Value string
 }
 
-func (p BaseParam) ParamName() string {
+func (p *BaseParam) ParamName() string {
 	return p.Name
 }
 
