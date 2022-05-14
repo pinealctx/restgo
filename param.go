@@ -237,6 +237,7 @@ func ObjectParams(obj interface{}) []IParam {
 const (
 	tagNameQuery      = "query"
 	tagNamePath       = "path"
+	tagNameForm       = "form"
 	tagNameHeader     = "header"
 	tagNameCookie     = "cookie"
 	tagOptionRequired = "required"
@@ -273,6 +274,8 @@ func makeParamByTag(tag, name, value string) IParam {
 		return NewURLQueryParam(name, value)
 	case tagNamePath:
 		return NewURLSegmentParam(name, value, "")
+	case tagNameForm:
+		return NewFormDataParam(name, value)
 	case tagNameHeader:
 		return NewHeaderParam(name, value)
 	case tagNameCookie:

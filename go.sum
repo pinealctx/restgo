@@ -123,8 +123,8 @@ github.com/onsi/ginkgo v1.16.4/go.mod h1:dX+/inL/fNMqNlz0e9LfyB9TswhZpCVdJM/Z6Vv
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1ybHNo=
 github.com/onsi/gomega v1.15.0/go.mod h1:cIuvLEne0aoVhAgh/O6ac0Op8WWw9H6eYCriF+tEHG0=
-github.com/pinealctx/neptune v0.6.6 h1:u7hf7wYN34/eXhqQQiszcK71X/yRwjYmR1/Jfcs+C18=
-github.com/pinealctx/neptune v0.6.6/go.mod h1:iXablJYzLuv4TZ2zV48Q70B6smZHK7yigFVeSYZRqrU=
+github.com/pinealctx/neptune v0.8.4-0.20220513082456-ea94fa5e23b9 h1:TIcKYL//7FolnOokczGBV9gmqBgnH9ZeDSAmDIZ/iLc=
+github.com/pinealctx/neptune v0.8.4-0.20220513082456-ea94fa5e23b9/go.mod h1:UBoazYtLqDqKo52rMYfQxkmEVE6l1LLGB00ZzMJ39R4=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
