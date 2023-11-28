@@ -73,10 +73,13 @@ func (c *Client) Do(ctx context.Context, req IRequest) (IResponse, error) {
 		request.Header.Set(headerUserAgent, defaultUA)
 	}
 	var response *http.Response
+	// nolint: bodyclose
 	response, err = c.client.Do(request)
 	if err != nil {
 		return nil, err
 	}
+	// response body is closed by caller
+	// actually, it's automatically closed by Data access
 	var rsp = NewResponse(response)
 	// run after hooks
 	c.runAfterHooks(req, rsp)

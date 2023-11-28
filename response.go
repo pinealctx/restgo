@@ -10,13 +10,32 @@ import (
 )
 
 type IResponse interface {
+	// GetResponse get http response
 	GetResponse() *http.Response
+	// StatusCode get http status code
 	StatusCode() int
+	// Data get response data
+	// it will automatically close response body
 	Data() ([]byte, error)
+	// Pipe : pipe response data to writer
+	// it will automatically close response body
 	Pipe(writer io.Writer) error
+	// JSONUnmarshal unmarshal response data to json
+	// it will automatically close response body
 	JSONUnmarshal(i interface{}) error
+	// XMLUnmarshal unmarshal response data to xml
+	// it will automatically close response body
 	XMLUnmarshal(i interface{}) error
+	// SaveFile save response data to file
+	// it will automatically close response body
 	SaveFile(fileName string) error
+	// ExplicitCloseBody close response body
+	// If you get a response but never access it's body,
+	// you should call this method to close response body.
+	// Otherwise, it will cause resource leak.
+	// Actually, you can use GetResponse().Body.Close() to close response body,
+	// but this method is more convenient and remind you to close response body.
+	ExplicitCloseBody() error
 }
 
 type Response struct {
@@ -75,4 +94,8 @@ func (r *Response) SaveFile(fileName string) error {
 	}
 	defer writer.Close()
 	return r.Pipe(writer)
+}
+
+func (r *Response) ExplicitCloseBody() error {
+	return r.rsp.Body.Close()
 }
