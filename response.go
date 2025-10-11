@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"github.com/pinealctx/neptune/jsonx"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -22,10 +21,10 @@ type IResponse interface {
 	Pipe(writer io.Writer) error
 	// JSONUnmarshal unmarshal response data to json
 	// it will automatically close response body
-	JSONUnmarshal(i interface{}) error
+	JSONUnmarshal(i any) error
 	// XMLUnmarshal unmarshal response data to xml
 	// it will automatically close response body
-	XMLUnmarshal(i interface{}) error
+	XMLUnmarshal(i any) error
 	// SaveFile save response data to file
 	// it will automatically close response body
 	SaveFile(fileName string) error
@@ -61,7 +60,7 @@ func (r *Response) Data() ([]byte, error) {
 	}
 	defer r.rsp.Body.Close()
 	var err error
-	r.data, err = ioutil.ReadAll(r.rsp.Body)
+	r.data, err = io.ReadAll(r.rsp.Body)
 	return r.data, err
 }
 
@@ -71,7 +70,7 @@ func (r *Response) Pipe(writer io.Writer) error {
 	return err
 }
 
-func (r *Response) JSONUnmarshal(i interface{}) error {
+func (r *Response) JSONUnmarshal(i any) error {
 	var data, err = r.Data()
 	if err != nil {
 		return err
@@ -79,7 +78,7 @@ func (r *Response) JSONUnmarshal(i interface{}) error {
 	return jsonx.JSONFastUnmarshal(data, i)
 }
 
-func (r *Response) XMLUnmarshal(i interface{}) error {
+func (r *Response) XMLUnmarshal(i any) error {
 	var data, err = r.Data()
 	if err != nil {
 		return err

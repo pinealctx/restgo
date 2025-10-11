@@ -100,7 +100,7 @@ func NewBodyParam(contentType string, value io.Reader) *BodyParam {
 	return &BodyParam{Value: value, ContentType: contentType}
 }
 
-func NewJSONBody(obj interface{}) (*BodyParam, error) {
+func NewJSONBody(obj any) (*BodyParam, error) {
 	var buff []byte
 	var err error
 	switch o := obj.(type) {
@@ -118,7 +118,7 @@ func NewJSONBody(obj interface{}) (*BodyParam, error) {
 	}, nil
 }
 
-func NewXMLBody(obj interface{}) (*BodyParam, error) {
+func NewXMLBody(obj any) (*BodyParam, error) {
 	var buff, err = xml.Marshal(obj)
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func FileWriter(filePath string) WriterFunc {
 	}
 }
 
-func ObjectParams(obj interface{}) []IParam {
+func ObjectParams(obj any) []IParam {
 	var objV = reflect.ValueOf(obj)
 	if objV.Kind() != reflect.Ptr {
 		return nil

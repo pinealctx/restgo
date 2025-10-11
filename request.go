@@ -26,8 +26,8 @@ type IRequest interface {
 	AddFileBytes(fieldName, fileName string, bytes []byte) IRequest
 	AddFilePath(fieldName, filePath string) IRequest
 	SetBody(contentType string, value io.Reader) IRequest
-	SetJSONBody(obj interface{}) IRequest
-	SetXMLBody(obj interface{}) IRequest
+	SetJSONBody(obj any) IRequest
+	SetXMLBody(obj any) IRequest
 	WithContentType(contentType string) IRequest
 
 	MakeURL(baseURL *url.URL) (string, error)
@@ -129,7 +129,7 @@ func (r *Request) SetBody(contentType string, value io.Reader) IRequest {
 	return r
 }
 
-func (r *Request) SetJSONBody(obj interface{}) IRequest {
+func (r *Request) SetJSONBody(obj any) IRequest {
 	var body, err = NewJSONBody(obj)
 	if err != nil {
 		r.Err = err
@@ -139,7 +139,7 @@ func (r *Request) SetJSONBody(obj interface{}) IRequest {
 	return r
 }
 
-func (r *Request) SetXMLBody(obj interface{}) IRequest {
+func (r *Request) SetXMLBody(obj any) IRequest {
 	var body, err = NewXMLBody(obj)
 	if err != nil {
 		r.Err = err
@@ -204,13 +204,13 @@ func (r *Request) MakeURL(baseURL *url.URL) (string, error) {
 
 func (r *Request) GetMethod() string {
 	if r.Method == "" {
-		return "GET"
+		return http.MethodGet
 	}
 	return r.Method
 }
 
 func (r *Request) MakeRequestBody() (io.Reader, error) {
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		return nil, nil
 	}
 	if r.Body != nil {
