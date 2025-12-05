@@ -3,16 +3,18 @@ package restgo
 import (
 	"bytes"
 	"encoding/xml"
-	"github.com/fatih/structtag"
-	"github.com/pinealctx/neptune/jsonx"
-	"github.com/pinealctx/neptune/tex"
-	"go.uber.org/zap/zapcore"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
 	"reflect"
 	"strings"
+
+	"github.com/fatih/structtag"
+	"github.com/pinealctx/neptune/jsonx"
+	"github.com/pinealctx/neptune/tex"
+	"go.uber.org/zap/zapcore"
 )
 
 type IParam interface {
@@ -119,7 +121,7 @@ func NewJSONBody(obj any) (*BodyParam, error) {
 }
 
 func NewXMLBody(obj any) (*BodyParam, error) {
-	var buff, err = xml.Marshal(obj)
+	buff, err := xml.Marshal(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +129,78 @@ func NewXMLBody(obj any) (*BodyParam, error) {
 		ContentType: "application/xml; charset=utf-8",
 		Value:       bytes.NewBuffer(buff),
 	}, nil
+}
+
+// FormDataBuilder 用于构建 multipart/form-data 请求体
+type FormDataBuilder struct {
+	Fields map[string]string
+	Files  map[string][]byte
+}
+
+// NewFormDataBuilder 创建一个新的 FormDataBuilder
+func NewFormDataBuilder() *FormDataBuilder {
+	return &FormDataBuilder{
+		Fields: make(map[string]string),
+		Files:  make(map[string][]byte),
+	}
+}
+
+// AddField 添加字符串字段
+func (fdb *FormDataBuilder) AddField(name, value string) *FormDataBuilder {
+	fdb.Fields[name] = value
+	return fdb
+}
+
+// AddFile 添加文件内容
+func (fdb *FormDataBuilder) AddFile(fieldName string, fileContent []byte) *FormDataBuilder {
+	fdb.Files[fieldName] = fileContent
+	return fdb
+}
+
+// NewFormBody 创建 multipart/form-data 格式的请求体
+// 参数：fields 为表单字段 map，files 为文件字段 map(字段名 -> 文件内容)
+func NewFormBody(fields map[string]string, files map[string][]byte) (*BodyParam, error) {
+	buff := new(bytes.Buffer)
+	writer := multipart.NewWriter(buff)
+
+	// 添加字段
+	for name, value := range fields {
+		err := writer.WriteField(name, value)
+		if err != nil {
+			writer.Close()
+			return nil, err
+		}
+	}
+
+	// 添加文件
+	for fieldName, fileContent := range files {
+		w, err := writer.CreateFormFile(fieldName, fieldName)
+		if err != nil {
+			writer.Close()
+			return nil, err
+		}
+		_, err = w.Write(fileContent)
+		if err != nil {
+			writer.Close()
+			return nil, err
+		}
+	}
+
+	// 必须在返回前 Close writer，以完成 multipart 编码
+	err := writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return &BodyParam{
+		ContentType: writer.FormDataContentType(),
+		Value:       buff,
+	}, nil
+}
+
+// NewFormBodyBuilder 使用 FormDataBuilder 创建 multipart/form-data 格式的请求体
+func NewFormBodyBuilder(builder *FormDataBuilder) (*BodyParam, error) {
+	return NewFormBody(builder.Fields, builder.Files)
 }
 
 func (p BodyParam) ParamName() string {
@@ -153,7 +227,7 @@ func NewBytesFileParam(fieldName, fileName string, bytes []byte) *FileParam {
 }
 
 func NewPathFileParam(fieldName, filePath string) (*FileParam, error) {
-	var contentType, size, err = DetectContentTypeAndSize(filePath)
+	contentType, size, err := DetectContentTypeAndSize(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -174,19 +248,19 @@ type WriterFunc func(w io.Writer) error
 
 func BytesWriter(buff []byte) WriterFunc {
 	return func(w io.Writer) error {
-		var _, err = w.Write(buff)
+		_, err := w.Write(buff)
 		return err
 	}
 }
 
 func FileWriter(filePath string) WriterFunc {
 	return func(w io.Writer) error {
-		var file, err = os.Open(filePath)
+		file, err := os.Open(filePath)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
-		var buf = make([]byte, 1024)
+		buf := make([]byte, 1024)
 		for {
 			var n int
 			n, err = file.Read(buf)
@@ -206,7 +280,7 @@ func FileWriter(filePath string) WriterFunc {
 }
 
 func ObjectParams(obj any) []IParam {
-	var objV = reflect.ValueOf(obj)
+	objV := reflect.ValueOf(obj)
 	if objV.Kind() != reflect.Ptr {
 		return nil
 	}
@@ -214,9 +288,9 @@ func ObjectParams(obj any) []IParam {
 	if objV.Kind() != reflect.Struct {
 		return nil
 	}
-	var objT = objV.Type()
-	var size = objT.NumField()
-	var params = make([]IParam, 0)
+	objT := objV.Type()
+	size := objT.NumField()
+	params := make([]IParam, 0)
 	for i := 0; i < size; i++ {
 		f := objT.Field(i)
 		if f.PkgPath != "" && !f.Anonymous {
@@ -226,7 +300,7 @@ func ObjectParams(obj any) []IParam {
 		if err != nil {
 			continue
 		}
-		var p = tags2Params(tags, objV.Field(i))
+		p := tags2Params(tags, objV.Field(i))
 		if len(p) != 0 {
 			params = append(params, p...)
 		}
@@ -244,22 +318,22 @@ const (
 )
 
 func tags2Params(tags *structtag.Tags, v reflect.Value) []IParam {
-	var params = make([]IParam, 0)
-	var isSlice = strings.HasPrefix(v.Type().String(), "[]")
+	params := make([]IParam, 0)
+	isSlice := strings.HasPrefix(v.Type().String(), "[]")
 	for _, k := range tags.Keys() {
-		var tag, _ = tags.Get(k)
+		tag, _ := tags.Get(k)
 		if !tag.HasOption(tagOptionRequired) && v.IsZero() {
 			continue
 		}
 		if !isSlice {
-			var p = makeParamByTag(k, tag.Name, tex.ToString(v.Interface()))
+			p := makeParamByTag(k, tag.Name, tex.ToString(v.Interface()))
 			if p != nil {
 				params = append(params, p)
 			}
 			continue
 		}
 		for i := 0; i < v.Len(); i++ {
-			var p = makeParamByTag(k, tag.Name, tex.ToString(v.Index(i)))
+			p := makeParamByTag(k, tag.Name, tex.ToString(v.Index(i)))
 			if p != nil {
 				params = append(params, p)
 			}

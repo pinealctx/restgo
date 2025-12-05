@@ -28,6 +28,7 @@ type IRequest interface {
 	SetBody(contentType string, value io.Reader) IRequest
 	SetJSONBody(obj any) IRequest
 	SetXMLBody(obj any) IRequest
+	SetFormBody(fields map[string]string, files map[string][]byte) IRequest
 	WithContentType(contentType string) IRequest
 
 	MakeURL(baseURL *url.URL) (string, error)
@@ -130,7 +131,7 @@ func (r *Request) SetBody(contentType string, value io.Reader) IRequest {
 }
 
 func (r *Request) SetJSONBody(obj any) IRequest {
-	var body, err = NewJSONBody(obj)
+	body, err := NewJSONBody(obj)
 	if err != nil {
 		r.Err = err
 		return r
@@ -140,7 +141,17 @@ func (r *Request) SetJSONBody(obj any) IRequest {
 }
 
 func (r *Request) SetXMLBody(obj any) IRequest {
-	var body, err = NewXMLBody(obj)
+	body, err := NewXMLBody(obj)
+	if err != nil {
+		r.Err = err
+		return r
+	}
+	r.Body = body
+	return r
+}
+
+func (r *Request) SetFormBody(fields map[string]string, files map[string][]byte) IRequest {
+	body, err := NewFormBody(fields, files)
 	if err != nil {
 		r.Err = err
 		return r
@@ -155,7 +166,7 @@ func (r *Request) AddFileBytes(fieldName, fileName string, bytes []byte) IReques
 }
 
 func (r *Request) AddFilePath(fieldName, filePath string) IRequest {
-	var p, err = NewPathFileParam(fieldName, filePath)
+	p, err := NewPathFileParam(fieldName, filePath)
 	if err != nil {
 		r.Err = err
 		return r
@@ -172,31 +183,31 @@ func (r *Request) WithContentType(contentType string) IRequest {
 func (r *Request) MakeURL(baseURL *url.URL) (string, error) {
 	if strings.HasPrefix(r.Resource, "http://") ||
 		strings.HasPrefix(r.Resource, "https://") {
-		var reqURL, err = url.ParseRequestURI(r.Resource)
+		reqURL, err := url.ParseRequestURI(r.Resource)
 		if err == nil {
 			baseURL = reqURL
 		}
 	} else {
 		baseURL.Path = path.Join(baseURL.Path, r.Resource)
 	}
-	var q = baseURL.Query()
+	q := baseURL.Query()
 	for _, query := range r.URLQueries {
 		q.Add(query.Name, query.Value)
 	}
 	baseURL.RawQuery = q.Encode()
-	var outURL = baseURL.String()
-	var segSize = len(r.URLSegments)
+	outURL := baseURL.String()
+	segSize := len(r.URLSegments)
 	if segSize != 0 {
-		var replaces = make([]string, segSize*2)
+		replaces := make([]string, segSize*2)
 		for i, seg := range r.URLSegments {
-			var segFmt = seg.Format
+			segFmt := seg.Format
 			if segFmt == "" {
 				segFmt = defaultURLSegmentFormat
 			}
 			replaces[i*2] = fmt.Sprintf(segFmt, seg.Name)
 			replaces[i*2+1] = seg.Value
 		}
-		var replacer = strings.NewReplacer(replaces...)
+		replacer := strings.NewReplacer(replaces...)
 		outURL = replacer.Replace(outURL)
 	}
 	return outURL, nil
@@ -232,14 +243,14 @@ func (r *Request) WrapperHTTPRequest(req *http.Request) {
 	for _, p := range r.Cookies {
 		req.AddCookie(&p.Cookie)
 	}
-	var ct = req.Header.Get(headerContentType)
+	ct := req.Header.Get(headerContentType)
 	if ct == "" && r.ContentType != "" {
 		req.Header.Set(headerContentType, r.ContentType)
 	}
 }
 
 func (r *Request) makeFormDataBody() io.Reader {
-	var values = url.Values{}
+	values := url.Values{}
 	for _, c := range r.FormItems {
 		values.Add(c.Name, c.Value)
 	}
@@ -248,8 +259,8 @@ func (r *Request) makeFormDataBody() io.Reader {
 }
 
 func (r *Request) makeMultipartBody() (io.Reader, error) {
-	var body = new(bytes.Buffer)
-	var writer = multipart.NewWriter(body)
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
 	defer writer.Close()
 	var err error
 	for _, f := range r.FormItems {

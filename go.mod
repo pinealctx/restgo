@@ -4,8 +4,8 @@ go 1.24.4
 
 require (
 	github.com/fatih/structtag v1.2.0
-	github.com/pinealctx/neptune v1.3.7
-	go.uber.org/zap v1.27.0
+	github.com/pinealctx/neptune v1.3.14
+	go.uber.org/zap v1.27.1
 )
 
 require (
@@ -15,5 +15,5 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 )
